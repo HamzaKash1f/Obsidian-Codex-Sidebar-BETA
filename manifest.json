@@ -1,0 +1,11 @@
+{
+	"id": "codex-sidebar",
+	"name": "Codex Sidebar",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Allows users to use codexCLI within their obsidian vault - supports MCP access ",
+	"author": "Hamza Kashif",
+	"authorUrl": "",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": false
+}
