@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import MyPlugin from "./main";
+import CodexSidebarPlugin from "./main";
 
-export interface MyPluginSettings {
+export interface CodexSettings {
   codexExecutablePath: string;
   mockRun: boolean;
   skipGitRepoCheck: boolean;
@@ -11,7 +11,7 @@ export interface MyPluginSettings {
   contextMaxTokens: number; // for UI display only
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: CodexSettings = {
   codexExecutablePath: "codex",
   mockRun: true,
   skipGitRepoCheck: false,
@@ -22,10 +22,10 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 };
 
 
-export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+export class CodexSettingTab extends PluginSettingTab {
+	plugin: CodexSidebarPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: CodexSidebarPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -35,14 +35,14 @@ export class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Codex Settings" });
+		new Setting(containerEl).setName("Sidebar").setHeading();
 
 		new Setting(containerEl)
 			.setName("Codex executable path")
-			.setDesc("Binary name or full path to the Codex CLI.")
+			.setDesc("Codex CLI binary name or full path.")
 			.addText((text) =>
 				text
-					.setPlaceholder("codex")
+					.setPlaceholder("Codex")
 					.setValue(this.plugin.settings.codexExecutablePath)
 					.onChange(async (value) => {
 						this.plugin.settings.codexExecutablePath = value || "codex";
@@ -51,20 +51,20 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Mock run (no Codex required)")
-			.setDesc("When enabled, Run simulates Codex output without spawning any process.")
-			.addToggle(toggle =>
+			.setName("Mock run (no Codex CLI required)")
+			.setDesc("Simulates Codex output without spawning any process.")
+			.addToggle((toggle) =>
 				toggle
-				.setValue(this.plugin.settings.mockRun)
-				.onChange(async (value) => {
-					this.plugin.settings.mockRun = value;
-					await this.plugin.saveSettings();
-				})
-		);
+					.setValue(this.plugin.settings.mockRun)
+					.onChange(async (value) => {
+						this.plugin.settings.mockRun = value;
+						await this.plugin.saveSettings();
+					})
+			);
 
 		new Setting(containerEl)
-			.setName("Skip git repo check")
-			.setDesc("Adds --skip-git-repo-check for Codex runs (useful when outside a trusted repo).")
+			.setName("Skip Git repo check")
+			.setDesc("Runs Codex without checking for a Git repo.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.skipGitRepoCheck)
@@ -76,7 +76,7 @@ export class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Attach vault root")
-			.setDesc("Adds the vault root to Codex via --add-dir so it can read from your vault.")
+			.setDesc("Adds the vault root via --add-dir so Codex can read your vault.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.attachVaultRoot)
@@ -88,7 +88,7 @@ export class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Attach current note folder")
-			.setDesc("Adds the current note's folder to Codex via --add-dir when available.")
+			.setDesc("Codex adds the current note folder via --add-dir when available.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.attachCurrentNoteFolder)
@@ -100,9 +100,10 @@ export class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Extra folders (one per line)")
-			.setDesc("Absolute paths added to Codex with --add-dir.")
+			.setDesc("Absolute paths added with --add-dir.")
 			.addTextArea((text) =>
 				text
+					// eslint-disable-next-line obsidianmd/ui/sentence-case
 					.setPlaceholder("C:\\path\\to\\knowledge-base\nD:\\docs")
 					.setValue(this.plugin.settings.extraAddDirs)
 					.onChange(async (value) => {
@@ -113,7 +114,7 @@ export class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Context budget (tokens)")
-			.setDesc("Used for UI-only context usage indicator; does not change Codex limits.")
+			.setDesc("Used for the UI context indicator; it does not change limits.")
 			.addText((text) =>
 				text
 					.setPlaceholder("8000")

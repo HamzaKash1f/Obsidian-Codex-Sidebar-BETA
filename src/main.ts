@@ -1,10 +1,10 @@
 import { addIcon, App, Editor, MarkdownView, Modal, Plugin } from "obsidian";
 
-import { DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab } from "./settings";
+import { CodexSettingTab, CodexSettings, DEFAULT_SETTINGS } from "./settings";
 import { CODEX_VIEW_TYPE, CodexView } from "./ui/codex-view";
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class CodexSidebarPlugin extends Plugin {
+	settings: CodexSettings;
 
 	async onload() {
 		addIcon(
@@ -20,7 +20,7 @@ export default class MyPlugin extends Plugin {
 		// Command palette: Toggle Codex Panel
 		this.addCommand({
 			id: "toggle-codex-panel",
-			name: "Toggle Codex Panel",
+			name: "Toggle Codex panel",
 			callback: async () => {
 				const existing = this.app.workspace.getLeavesOfType(CODEX_VIEW_TYPE);
 				const first = existing[0];
@@ -36,7 +36,7 @@ export default class MyPlugin extends Plugin {
 				if (!leaf) return;
 
 				await leaf.setViewState({ type: CODEX_VIEW_TYPE, active: true });
-				this.app.workspace.revealLeaf(leaf);
+				await this.app.workspace.revealLeaf(leaf);
 			},
 		});
 
@@ -55,7 +55,7 @@ export default class MyPlugin extends Plugin {
 			checkCallback: (checking: boolean) => {
 				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (markdownView) {
-					if (!checking) new SampleModal(this.app).open();
+					if (!checking) new CodexModal(this.app).open();
 					return true;
 				}
 				return false;
@@ -63,7 +63,7 @@ export default class MyPlugin extends Plugin {
 		});
 
 		// Settings tab
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new CodexSettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -71,7 +71,7 @@ export default class MyPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as Partial<MyPluginSettings>);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as Partial<CodexSettings>);
 	}
 
 	async saveSettings() {
@@ -79,7 +79,7 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
+class CodexModal extends Modal {
 	constructor(app: App) {
 		super(app);
 	}

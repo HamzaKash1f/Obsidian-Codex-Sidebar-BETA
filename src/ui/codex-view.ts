@@ -7,10 +7,10 @@ import {
 	setIcon,
 } from "obsidian";
 import * as path from "path";
-import { spawn } from "child_process";
+import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 
 import type { Plugin } from "obsidian";
-import type { MyPluginSettings } from "../settings";
+import type { CodexSettings } from "../settings";
 
 export const CODEX_VIEW_TYPE = "codex-view";
 
@@ -24,7 +24,7 @@ interface ChatMessage {
 	createdAt: number;
 }
 
-type CodexPlugin = Plugin & { settings: MyPluginSettings };
+type CodexPlugin = Plugin & { settings: CodexSettings };
 
 export class CodexView extends ItemView {
 	private plugin: CodexPlugin;
@@ -48,13 +48,14 @@ export class CodexView extends ItemView {
 	private status: RunStatus = "Idle";
 	private cwdAbs: string;
 	private basePathAbs: string | null;
-	private currentChild: ReturnType<typeof spawn> | null = null;
+	private currentChild: ChildProcessWithoutNullStreams | null = null;
 	private messageMap = new Map<string, ChatMessage>();
 	private messageContentEls = new Map<string, HTMLElement>();
 	private messageOrder: string[] = [];
 	private sessionStartIndex = 0;
 	private messageIdCounter = 0;
 	private readonly historyTokenCap = 12000;
+	private readonly textDecoder = new TextDecoder();
 
 	private readonly onRunRequested = () => void this.runCodex();
 
@@ -303,12 +304,12 @@ export class CodexView extends ItemView {
 
 	private async renderMarkdownInto(container: HTMLElement, markdown: string) {
 		const sourcePath = this.plugin.app.workspace.getActiveFile()?.path ?? "";
-		await MarkdownRenderer.renderMarkdown(markdown, container, sourcePath, this);
+		await MarkdownRenderer.render(this.app, markdown, container, sourcePath, this);
 		this.addCopyButtons(container);
 	}
 
 	private addCopyButtons(container: HTMLElement) {
-		const blocks = container.querySelectorAll("pre");
+		const blocks = container.querySelectorAll<HTMLPreElement>("pre");
 		blocks.forEach((pre) => {
 			if (pre.querySelector(".codex-code-copy")) return;
 			const button = document.createElement("button");
@@ -317,14 +318,18 @@ export class CodexView extends ItemView {
 			button.setAttribute("aria-label", "Copy code");
 			button.setAttribute("title", "Copy");
 			button.innerText = "Copy";
-			button.addEventListener("click", async () => {
-				const code = pre.querySelector("code")?.textContent ?? "";
-				await navigator.clipboard.writeText(code);
-				button.setText("Copied");
-				window.setTimeout(() => button.setText("Copy"), 1500);
+			button.addEventListener("click", () => {
+				void this.handleCopyClick(pre, button);
 			});
 			pre.appendChild(button);
 		});
+	}
+
+	private async handleCopyClick(pre: HTMLPreElement, button: HTMLButtonElement) {
+		const code = pre.querySelector("code")?.textContent ?? "";
+		await navigator.clipboard.writeText(code);
+		button.setText("Copied");
+		window.setTimeout(() => button.setText("Copy"), 1500);
 	}
 
 	private scrollToBottom() {
@@ -525,14 +530,14 @@ export class CodexView extends ItemView {
 			});
 			this.currentChild = child;
 
-			child.stdout?.on("data", (buf) => {
-				const s = buf.toString();
+			child.stdout?.on("data", (buf: Uint8Array) => {
+				const s = this.textDecoder.decode(buf);
 				combinedStdout += s;
 				this.appendMessageContent(assistantId, s);
 			});
 
-			child.stderr?.on("data", (buf) => {
-				const s = buf.toString();
+			child.stderr?.on("data", (buf: Uint8Array) => {
+				const s = this.textDecoder.decode(buf);
 				combinedStderr += s;
 				this.updateMessageContent(
 					debugId,
@@ -548,13 +553,13 @@ export class CodexView extends ItemView {
 				);
 			});
 
-			child.on("error", (err) => {
+			child.on("error", (err: Error & { code?: string }) => {
 				this.setStatus("Error");
 				this.setTyping(false);
 				this.currentChild = null;
 
 				const friendly =
-					err && typeof err === "object" && "code" in err && (err as any).code === "ENOENT"
+					err.code === "ENOENT"
 						? "Codex not found. Check the executable path in settings."
 						: "Failed to start Codex.";
 
@@ -569,7 +574,7 @@ export class CodexView extends ItemView {
 						addDirs,
 						exitCode: "(spawn error)",
 						stderr: combinedStderr || "(empty)",
-						error: String(err),
+						error: err.message || "Unknown error",
 					})
 				);
 			});
@@ -604,11 +609,17 @@ export class CodexView extends ItemView {
 
 				this.setTyping(false);
 			});
-		} catch (err) {
+		} catch (err: unknown) {
 			this.setStatus("Error");
 			this.setTyping(false);
 			this.currentChild = null;
 
+			const errorText =
+				err instanceof Error
+					? err.message
+					: typeof err === "string"
+						? err
+						: JSON.stringify(err);
 			this.updateMessageContent(assistantId, "Failed to run Codex. See Debug for details.");
 			this.updateMessageContent(
 				debugId,
@@ -619,7 +630,7 @@ export class CodexView extends ItemView {
 					addDirs,
 					exitCode: "(exception)",
 					stderr: combinedStderr || "(empty)",
-					error: String(err),
+					error: errorText,
 				})
 			);
 		}
@@ -629,8 +640,9 @@ export class CodexView extends ItemView {
 	// Vault path helper (desktop)
 	// -------------------------
 	private getVaultBasePathAbs(app: App): string | null {
-		const adapter: any = app.vault.adapter as any;
-		const basePath = typeof adapter?.getBasePath === "function" ? adapter.getBasePath() : null;
+		const adapter = app.vault.adapter;
+		const adapterWithBasePath = adapter as { getBasePath?: () => string } | null;
+		const basePath = typeof adapterWithBasePath?.getBasePath === "function" ? adapterWithBasePath.getBasePath() : null;
 		return typeof basePath === "string" && basePath.length > 0 ? basePath : null;
 	}
 }

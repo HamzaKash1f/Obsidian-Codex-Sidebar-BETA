@@ -1,6 +1,6 @@
-import esbuild from "esbuild";
-import process from "process";
-import { builtinModules } from 'node:module';
+import { spawn } from "node:child_process";
+import process from "node:process";
+import { builtinModules, createRequire } from "node:module";
 
 const banner =
 `/*
@@ -11,39 +11,63 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = (process.argv[2] === "production");
 
-const context = await esbuild.context({
-	banner: {
-		js: banner,
-	},
-	entryPoints: ["src/main.ts"],
-	bundle: true,
-	external: [
-		"obsidian",
-		"electron",
-		"@codemirror/autocomplete",
-		"@codemirror/collab",
-		"@codemirror/commands",
-		"@codemirror/language",
-		"@codemirror/lint",
-		"@codemirror/search",
-		"@codemirror/state",
-		"@codemirror/view",
-		"@lezer/common",
-		"@lezer/highlight",
-		"@lezer/lr",
-		...builtinModules],
-	format: "cjs",
-	target: "es2018",
-	logLevel: "info",
-	sourcemap: prod ? false : "inline",
-	treeShaking: true,
-	outfile: "main.js",
-	minify: prod,
-});
+const require = createRequire(import.meta.url);
+const platformKey = `${process.platform} ${process.arch}`;
+const esbuildPlatformMap = {
+	"win32 x64": { pkg: "@esbuild/win32-x64", subpath: "esbuild.exe" },
+	"win32 ia32": { pkg: "@esbuild/win32-ia32", subpath: "esbuild.exe" },
+	"win32 arm64": { pkg: "@esbuild/win32-arm64", subpath: "esbuild.exe" },
+	"darwin x64": { pkg: "@esbuild/darwin-x64", subpath: "bin/esbuild" },
+	"darwin arm64": { pkg: "@esbuild/darwin-arm64", subpath: "bin/esbuild" },
+	"linux x64": { pkg: "@esbuild/linux-x64", subpath: "bin/esbuild" },
+	"linux arm64": { pkg: "@esbuild/linux-arm64", subpath: "bin/esbuild" },
+};
+const platformConfig = esbuildPlatformMap[platformKey];
+if (!platformConfig) {
+	throw new Error(`Unsupported platform for esbuild CLI: ${platformKey}`);
+}
+
+const esbuildBin = require.resolve(`${platformConfig.pkg}/${platformConfig.subpath}`);
+const external = [
+	"obsidian",
+	"electron",
+	"@codemirror/autocomplete",
+	"@codemirror/collab",
+	"@codemirror/commands",
+	"@codemirror/language",
+	"@codemirror/lint",
+	"@codemirror/search",
+	"@codemirror/state",
+	"@codemirror/view",
+	"@lezer/common",
+	"@lezer/highlight",
+	"@lezer/lr",
+	...builtinModules,
+];
+
+const args = [
+	"src/main.ts",
+	"--bundle",
+	"--format=cjs",
+	"--target=es2018",
+	"--log-level=info",
+	"--tree-shaking=true",
+	`--banner:js=${banner}`,
+	"--outfile=main.js",
+	...external.map((mod) => `--external:${mod}`),
+];
 
 if (prod) {
-	await context.rebuild();
-	process.exit(0);
+	args.push("--minify");
 } else {
-	await context.watch();
+	args.push("--sourcemap=inline", "--watch");
 }
+
+const child = spawn(esbuildBin, args, { stdio: "inherit" });
+child.on("error", (err) => {
+	console.error(err);
+	process.exit(1);
+});
+child.on("close", (code) => {
+	process.exit(code ?? 1);
+});
