@@ -126,12 +126,17 @@
 }
 
 .codex-bubble {
-	max-width: 80%;
-	padding: 10px 12px;
-	border-radius: 14px;
+	max-width: 88%;
+	padding: 8px 14px;
+	border-radius: 12px;
 	border: 1px solid var(--background-modifier-border, #e2e2e2);
 	background: var(--background-secondary, #f6f6f6);
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.codex-message-content {
+	font-size: 14px;
+	line-height: 1.4;
 }
 
 .codex-message:not(.codex-user) .codex-bubble:hover {
@@ -246,7 +251,7 @@
 	display: flex;
 	align-items: flex-end;
 	gap: 8px;
-	padding: 10px 12px;
+	padding: 8px 12px;
 	border-radius: 14px;
 	border: 1px solid var(--background-modifier-border, #e2e2e2);
 	background: var(--background-primary, #ffffff);
@@ -256,16 +261,18 @@
 .codex-input {
 	flex: 1;
 	border: none;
+	box-shadow: none;
 	background: transparent;
 	color: var(--text-normal, #1f1f1f);
 	font-size: 14px;
 	line-height: 1.5;
 	resize: none;
-	min-height: 42px;
+	min-height: 36px;
 }
 
 .codex-input:focus {
 	outline: none;
+	box-shadow: none;
 }
 
 .codex-composer:focus-within {
@@ -286,8 +293,8 @@
 }
 
 .codex-run:hover {
-	background: var(--background-modifier-border, #d8d8d8);
-	color: var(--text-normal, #1f1f1f);
+	background: var(--interactive-accent-hover, #0e8c6b);
+	color: var(--text-normal, #ffffff);
 }
 
 .codex-run:focus {
@@ -328,4 +335,9 @@
 .codex-new-chat:focus {
 	outline: none;
 	box-shadow: 0 0 0 2px var(--interactive-accent, #10a37f);
+}
+
+.codex-hint,
+.codex-status {
+	display: none;
 }
