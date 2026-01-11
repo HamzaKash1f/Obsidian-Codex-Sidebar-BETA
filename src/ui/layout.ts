@@ -8,6 +8,7 @@ export interface CodexLayout {
 	promptEl: HTMLTextAreaElement;
 	runBtnEl: HTMLButtonElement;
 	newChatBtnEl: HTMLButtonElement;
+	importPdfBtnEl: HTMLButtonElement;
 	messageListEl: HTMLDivElement;
 	typingEl: HTMLDivElement;
 	contextBarFillEl: HTMLDivElement;
@@ -31,6 +32,8 @@ export function createCodexLayout(contentEl: HTMLElement, iconName: string): Cod
 	titleWrap.createEl("h2", { text: "Codex", cls: "codex-title" });
 	const newChatBtnEl = titleRow.createEl("button", { cls: "codex-new-chat", text: "New chat" });
 	newChatBtnEl.setAttr("aria-label", "Start a new chat");
+	const importPdfBtnEl = titleRow.createEl("button", { cls: "codex-import-pdf", text: "Import PDF" });
+	importPdfBtnEl.setAttr("aria-label", "Import PDF into chat");
 
 	const hintEl = header.createEl("div", {
 		text: "Tab to move to current note",
@@ -87,6 +90,7 @@ export function createCodexLayout(contentEl: HTMLElement, iconName: string): Cod
 		promptEl,
 		runBtnEl,
 		newChatBtnEl,
+		importPdfBtnEl,
 		messageListEl,
 		typingEl,
 		contextBarFillEl,

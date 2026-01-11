@@ -34,6 +34,12 @@ export default tseslint.config(
 			"import/no-nodejs-modules": ["error", { allow: ["child_process", "path"] }],
 		},
 	},
+	{
+		files: ["src/run/**/*.ts"],
+		rules: {
+			"import/no-nodejs-modules": ["error", { allow: ["child_process"] }],
+		},
+	},
 	globalIgnores([
 		"node_modules",
 		"dist",

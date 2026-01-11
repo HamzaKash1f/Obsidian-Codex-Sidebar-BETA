@@ -1,4 +1,4 @@
-import { App, ItemView, MarkdownRenderer, MarkdownView, WorkspaceLeaf } from "obsidian";
+import { App, ItemView, MarkdownRenderer, MarkdownView, Notice, SuggestModal, TFile, WorkspaceLeaf } from "obsidian";
 import * as path from "path";
 import type { ChildProcessWithoutNullStreams } from "child_process";
 import type { Plugin } from "obsidian";
@@ -6,6 +6,7 @@ import type { CodexSettings } from "../settings";
 import { runCodex } from "../run/codex-runner";
 import type { RunStatus, MessageRole } from "../types";
 import { estimateTokens } from "../utils/token";
+import { pdfToText } from "../pdf/pdf-text";
 import { createCodexLayout, type CodexLayout } from "./layout";
 import { MessageStore } from "./message-store";
 
@@ -59,6 +60,7 @@ export class CodexView extends ItemView {
 
 		this.layout.runBtnEl.addEventListener("click", this.onRunRequested);
 		this.layout.newChatBtnEl.addEventListener("click", () => this.startNewChat());
+		this.layout.importPdfBtnEl.addEventListener("click", () => void this.importPdfFromVault());
 		this.layout.promptEl.addEventListener("keydown", (evt) => this.onPromptKeyDown(evt));
 		this.layout.promptEl.addEventListener("input", () => this.updateContextUsage());
 	}
@@ -141,7 +143,7 @@ export class CodexView extends ItemView {
 		if (role === "debug") {
 			const details = bubble.createEl("details", { cls: "codex-debug-details" });
 			const summary = details.createEl("summary", { cls: "codex-debug-summary" });
-			summary.setText("Debug");
+			summary.setText("Thinking");
 			const pre = details.createEl("pre", { cls: "codex-message-content codex-debug-content" });
 			contentEl = pre;
 		} else {
@@ -230,6 +232,59 @@ export class CodexView extends ItemView {
 		this.store.startNewChat();
 		this.addMessage("system", "New chat");
 		this.updateHistoryUsage();
+	}
+
+	async importPdfFromVault() {
+		const pdfs = this.app.vault
+			.getFiles()
+			.filter((file) => file.extension?.toLowerCase() === "pdf");
+
+		if (!pdfs.length) {
+			new Notice("No PDF files found in this vault");
+			return;
+		}
+
+		const file = await this.pickPdf(pdfs);
+		if (!file) return;
+
+		this.setInlineMessage("Reading PDF.");
+		try {
+			const bytes = await this.app.vault.adapter.readBinary(file.path);
+			const text = await pdfToText(bytes);
+			const message = `PDF: ${file.path}\n\n${text}`;
+			this.addMessage("system", message);
+			this.updateHistoryUsage();
+			this.scrollToBottom();
+		} catch (err) {
+			new Notice("Failed to read PDF (see console)");
+			console.error(err);
+		} finally {
+			this.setInlineMessage("");
+		}
+	}
+
+	private pickPdf(files: TFile[]): Promise<TFile | null> {
+		return new Promise((resolve) => {
+			const modal = new (class extends SuggestModal<TFile> {
+				getSuggestions(query: string): TFile[] {
+					const q = query.toLowerCase();
+					return files.filter((f) => f.path.toLowerCase().includes(q));
+				}
+				renderSuggestion(file: TFile, el: HTMLElement) {
+					el.createEl("div", { text: file.name });
+					el.createEl("small", { text: file.path });
+				}
+				onChooseSuggestion(file: TFile) {
+					resolve(file);
+				}
+				onClose() {
+					resolve(null);
+				}
+			})(this.app);
+
+			modal.setPlaceholder("Search PDF files in the vault");
+			modal.open();
+		});
 	}
 
 	private buildConversationContext(): string {

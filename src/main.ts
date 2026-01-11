@@ -1,4 +1,4 @@
-import { addIcon, App, Editor, MarkdownView, Modal, Plugin } from "obsidian";
+import { addIcon, App, Editor, MarkdownView, Modal, Plugin, WorkspaceLeaf } from "obsidian";
 
 import { CodexSettingTab, CodexSettings, DEFAULT_SETTINGS } from "./settings";
 import { CODEX_VIEW_TYPE, CodexView } from "./ui/codex-view";
@@ -46,6 +46,23 @@ export default class CodexSidebarPlugin extends Plugin {
 			name: "Replace selected content",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				editor.replaceSelection("Sample editor command");
+			},
+		});
+
+		this.addCommand({
+			id: "import-pdf-into-codex-chat",
+			name: "Codex: import PDF into chat",
+			callback: async () => {
+				let leaf: WorkspaceLeaf | null = this.app.workspace.getLeavesOfType(CODEX_VIEW_TYPE)[0] ?? null;
+				if (!leaf) {
+					leaf = this.app.workspace.getRightLeaf(false);
+					if (!leaf) return;
+					await leaf.setViewState({ type: CODEX_VIEW_TYPE, active: true });
+				}
+				const view = leaf.view as CodexView | null;
+				if (view?.importPdfFromVault) {
+					await view.importPdfFromVault();
+				}
 			},
 		});
 
