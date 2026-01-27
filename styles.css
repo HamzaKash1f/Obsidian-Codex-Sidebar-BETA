@@ -1,61 +1,53 @@
 .codex-root {
+	--codex-bg: #1f1f1f;
+	--codex-panel: #181818;
+	--codex-border: rgba(255, 255, 255, 0.08);
+	--codex-subtle: rgba(255, 255, 255, 0.05);
+	--codex-text: var(--text-normal, #e6e6e6);
+	--codex-muted: var(--text-muted, #9a9a9a);
 	height: 100%;
+	background: var(--codex-bg);
 }
 
 .codex-layout {
 	height: 100%;
 	display: flex;
 	justify-content: center;
-	padding: 12px;
+	padding: 16px;
 	box-sizing: border-box;
+	background: inherit;
 }
 
 .codex-column {
 	width: 100%;
-	max-width: 900px;
+	max-width: 960px;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 10px;
 	min-height: 0;
+	color: var(--codex-text);
 }
 
 .codex-header {
 	display: flex;
-	flex-direction: column;
-	gap: 6px;
-}
-
-.codex-title-row {
-	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-}
-
-.codex-title-wrap {
-	display: inline-flex;
-	align-items: center;
+	justify-content: flex-end;
 	gap: 8px;
 }
 
-.codex-title-icon {
-	color: #ffffff;
-	display: inline-flex;
-}
-
-.codex-title {
-	margin: 0;
+.codex-controls {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .workspace-leaf[data-type="codex-view"] .view-header-icon {
 	color: #ffffff;
 }
 
-.codex-hint,
-.codex-inline-msg,
-.codex-context-text {
-	color: var(--text-muted, #6b6b6b);
+.codex-inline-msg {
+	color: var(--codex-muted);
 	font-size: 12px;
 }
 
@@ -67,44 +59,37 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
-	color: var(--text-muted, #6b6b6b);
+	color: var(--codex-muted);
 	font-size: 12px;
 }
 
-.codex-context {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	flex: 1;
-}
-
-.codex-bars {
-	display: flex;
-	gap: 12px;
-}
-
-.codex-context-bar {
-	height: 6px;
+.codex-history-bar {
+	height: 5px;
 	width: 100%;
-	border-radius: 6px;
-	background: var(--background-modifier-border, #e2e2e2);
+	border-radius: 999px;
+	background: var(--codex-subtle);
 	overflow: hidden;
+	opacity: 0.9;
+	margin: 2px 0 4px;
+	flex-shrink: 0;
 }
 
-.codex-context-fill {
+.codex-history-fill {
 	height: 100%;
 	width: 0%;
-	background: var(--interactive-accent, #10a37f);
+	background: var(--interactive-accent, #3aa981);
+	opacity: 0.65;
+	transition: width 0.18s ease;
 }
 
 .codex-message-list {
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	padding: 16px;
+	padding: 14px;
 	border-radius: 14px;
-	border: 1px solid var(--background-modifier-border, #e2e2e2);
-	background: var(--background-primary, #ffffff);
+	border: 1px solid var(--codex-border);
+	background: var(--codex-panel);
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
@@ -129,28 +114,30 @@
 	max-width: 88%;
 	padding: 8px 14px;
 	border-radius: 12px;
-	border: 1px solid var(--background-modifier-border, #e2e2e2);
-	background: var(--background-secondary, #f6f6f6);
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+	border: 1px solid var(--codex-border);
+	background: var(--codex-subtle);
+	box-shadow: none;
 }
 
 .codex-message-content {
 	font-size: 14px;
-	line-height: 1.4;
+	line-height: 1.5;
+	color: var(--codex-text);
 }
 
 .codex-message:not(.codex-user) .codex-bubble:hover {
-	background: var(--background-modifier-hover, #ececec);
+	background: rgba(255, 255, 255, 0.08);
 }
 
 .codex-message.codex-user .codex-bubble {
 	border: none;
-	background: var(--interactive-accent, #10a37f);
+	background: var(--interactive-accent, #3aa981);
 	color: #ffffff;
 }
 
 .codex-message.codex-user .codex-bubble:hover {
-	background: var(--interactive-accent-hover, #0e8c6b);
+	background: var(--interactive-accent-hover, #2d8e6f);
+	color: #ffffff;
 }
 
 .codex-message.codex-user .codex-message-content a {
@@ -158,14 +145,15 @@
 }
 
 .codex-message.codex-debug .codex-bubble {
-	background: var(--background-secondary, #f6f6f6);
+	background: var(--codex-subtle);
+	border-color: var(--codex-border);
 	border-style: dashed;
 }
 
 .codex-message-content {
 	font-size: 14px;
 	line-height: 1.5;
-	color: var(--text-normal, #1f1f1f);
+	color: var(--codex-text);
 	user-select: text;
 }
 
@@ -176,7 +164,7 @@
 .codex-debug-summary {
 	cursor: pointer;
 	font-size: 12px;
-	color: var(--text-muted, #6b6b6b);
+	color: var(--codex-muted);
 	list-style: none;
 }
 
@@ -199,20 +187,21 @@
 	font-family: var(--font-monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
 	white-space: pre-wrap;
 	font-size: 12px;
-	color: var(--text-muted, #6b6b6b);
+	color: var(--codex-muted);
 	margin-top: 8px;
 }
 
 .codex-message-content a {
-	color: var(--interactive-accent, #10a37f);
+	color: var(--interactive-accent, #3aa981);
 }
 
 .codex-message-content pre {
 	position: relative;
 	padding: 12px;
 	border-radius: 10px;
-	border: 1px solid var(--background-modifier-border, #e2e2e2);
-	background: var(--background-primary, #ffffff);
+	border: 1px solid var(--codex-border);
+	background: #0f0f0f;
+	color: var(--codex-text);
 	overflow: auto;
 }
 
@@ -224,9 +213,9 @@
 	position: absolute;
 	top: 8px;
 	right: 8px;
-	border: 1px solid var(--background-modifier-border, #e2e2e2);
-	background: var(--background-secondary, #f6f6f6);
-	color: var(--text-muted, #6b6b6b);
+	border: 1px solid var(--codex-border);
+	background: var(--codex-subtle);
+	color: var(--codex-muted);
 	border-radius: 8px;
 	padding: 4px 8px;
 	font-size: 11px;
@@ -234,28 +223,19 @@
 }
 
 .codex-code-copy:hover {
-	background: var(--background-modifier-hover, #ececec);
-}
-
-.codex-typing {
-	color: var(--text-muted, #6b6b6b);
-	font-size: 12px;
-	font-style: italic;
-}
-
-.codex-typing.is-hidden {
-	display: none;
+	background: rgba(255, 255, 255, 0.12);
 }
 
 .codex-composer {
 	display: flex;
 	align-items: flex-end;
 	gap: 8px;
-	padding: 8px 12px;
-	border-radius: 14px;
-	border: 1px solid var(--background-modifier-border, #e2e2e2);
-	background: var(--background-primary, #ffffff);
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+	padding: 10px 12px;
+	border-radius: 12px;
+	border: 1px solid var(--codex-border);
+	background: rgba(255, 255, 255, 0.04);
+	box-shadow: none;
+	backdrop-filter: blur(2px);
 }
 
 .codex-input {
@@ -263,7 +243,7 @@
 	border: none;
 	box-shadow: none;
 	background: transparent;
-	color: var(--text-normal, #1f1f1f);
+	color: var(--codex-text);
 	font-size: 14px;
 	line-height: 1.5;
 	resize: none;
@@ -276,7 +256,8 @@
 }
 
 .codex-composer:focus-within {
-	box-shadow: 0 0 0 2px var(--interactive-accent, #10a37f);
+	/* Match focus outline to the theme accent so it mirrors the user message color */
+	box-shadow: 0 0 0 2px var(--interactive-accent, #3aa981);
 }
 
 .codex-run {
@@ -285,21 +266,20 @@
 	justify-content: center;
 	width: 34px;
 	height: 34px;
-	border-radius: 50%;
-	border: none;
+	border-radius: 10px;
+	border: 1px solid var(--codex-border);
 	cursor: pointer;
-	background: var(--interactive-accent, #10a37f);
-	color: var(--text-on-accent, #ffffff);
+	background: var(--codex-subtle);
+	color: var(--codex-text);
 }
 
 .codex-run:hover {
-	background: var(--interactive-accent-hover, #0e8c6b);
-	color: var(--text-normal, #ffffff);
+	background: rgba(255, 255, 255, 0.08);
 }
 
 .codex-run:focus {
 	outline: none;
-	box-shadow: 0 0 0 2px var(--interactive-accent, #10a37f);
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
 .codex-run:disabled {
@@ -313,31 +293,32 @@
 .codex-message.codex-system .codex-bubble {
 	border-style: dashed;
 	background: transparent;
-	color: var(--text-muted, #6b6b6b);
+	color: var(--codex-muted);
+	border-color: var(--codex-border);
 	font-size: 12px;
 	padding: 6px 10px;
 }
 
 .codex-new-chat {
-	border: 1px solid var(--background-modifier-border, #e2e2e2);
-	background: var(--background-secondary, #f6f6f6);
-	color: var(--text-normal, #1f1f1f);
-	padding: 6px 10px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(255, 255, 255, 0.06);
+	color: var(--text-normal, #e6e6e6);
+	padding: 7px 12px;
 	border-radius: 999px;
 	font-size: 12px;
 	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .codex-new-chat:hover {
-	background: var(--background-modifier-hover, #ececec);
+	background: rgba(255, 255, 255, 0.1);
 }
 
 .codex-new-chat:focus {
 	outline: none;
-	box-shadow: 0 0 0 2px var(--interactive-accent, #10a37f);
+	box-shadow: 0 0 0 2px rgba(58, 169, 129, 0.4);
 }
 
-.codex-hint,
 .codex-status {
 	display: none;
 }

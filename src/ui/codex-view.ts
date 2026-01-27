@@ -54,15 +54,12 @@ export class CodexView extends ItemView {
 		this.setStatus("Idle");
 		this.setInlineMessage("");
 		this.setCwdToVaultRoot();
-		this.updateContextUsage();
 		this.updateHistoryUsage();
-		this.setTyping(false);
 
+		// Composer is currently hidden for a minimal view; listeners stay wired for easy re-enable.
 		this.layout.runBtnEl.addEventListener("click", this.onRunRequested);
 		this.layout.newChatBtnEl.addEventListener("click", () => this.startNewChat());
-		this.layout.importPdfBtnEl.addEventListener("click", () => void this.importPdfFromVault());
 		this.layout.promptEl.addEventListener("keydown", (evt) => this.onPromptKeyDown(evt));
-		this.layout.promptEl.addEventListener("input", () => this.updateContextUsage());
 	}
 
 	async onClose() {
@@ -83,18 +80,8 @@ export class CodexView extends ItemView {
 		this.layout.inlineMsgEl.toggleClass("is-hidden", !msg.length);
 	}
 
-	private setTyping(isTyping: boolean) {
-		this.layout.typingEl.toggleClass("is-hidden", !isTyping);
-	}
-
 	private updateContextUsage() {
-		const budget = this.plugin.settings.contextMaxTokens || 8000;
-		const approxTokens = estimateTokens(this.layout.promptEl.value ?? "");
-		const pct = Math.min(100, Math.round((approxTokens / budget) * 100));
-		this.layout.contextBarFillEl.style.width = `${pct}%`;
-		this.layout.contextBarTextEl.setText(
-			`Context (approx): ~${approxTokens} tokens / ${budget} (${pct}%)`
-		);
+		// Context bar intentionally removed for the minimal layout.
 	}
 
 	private updateHistoryUsage() {
@@ -102,8 +89,12 @@ export class CodexView extends ItemView {
 		const approxTokens = estimateTokens(context);
 		const pct = Math.min(100, Math.round((approxTokens / this.historyTokenCap) * 100));
 		this.layout.historyBarFillEl.style.width = `${pct}%`;
-		this.layout.historyBarTextEl.setText(
-			`History (approx): ~${approxTokens} tokens / ${this.historyTokenCap} (${pct}%)`
+		this.layout.historyBarFillEl.parentElement?.setAttr("aria-valuenow", `${pct}`);
+		this.layout.historyBarFillEl.parentElement?.setAttr("aria-valuemin", "0");
+		this.layout.historyBarFillEl.parentElement?.setAttr("aria-valuemax", "100");
+		this.layout.historyBarFillEl.parentElement?.setAttr(
+			"title",
+			`History usage: ~${approxTokens} tokens of ${this.historyTokenCap}`
 		);
 	}
 
@@ -162,7 +153,7 @@ export class CodexView extends ItemView {
 			void this.renderMarkdownInto(contentEl, content);
 		}
 
-		this.layout.messageListEl.insertBefore(row, this.layout.typingEl);
+		this.layout.messageListEl.appendChild(row);
 		this.scrollToBottom();
 		this.updateHistoryUsage();
 		return message.id;
@@ -378,7 +369,6 @@ export class CodexView extends ItemView {
 
 		this.addMessage("user", promptRaw.trim());
 		this.layout.promptEl.value = "";
-		this.updateContextUsage();
 
 		const cwd = this.cwdAbs || this.basePathAbs || undefined;
 
@@ -413,7 +403,6 @@ export class CodexView extends ItemView {
 		args.push(promptWithContext);
 
 		this.setStatus("Running");
-		this.setTyping(true);
 
 		const debugId = this.addMessage(
 			"debug",
@@ -458,7 +447,6 @@ export class CodexView extends ItemView {
 				})
 			);
 			this.setStatus("Idle");
-			this.setTyping(false);
 			return;
 		}
 
@@ -521,7 +509,6 @@ export class CodexView extends ItemView {
 			})
 		);
 
-		this.setTyping(false);
 	}
 
 	// -------------------------
